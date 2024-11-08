@@ -5,6 +5,12 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin: true,
+    credentials: true, // 쿠키를 포함한 요청 허용
+  });
+
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

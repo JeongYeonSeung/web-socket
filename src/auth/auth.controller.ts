@@ -40,13 +40,13 @@ export class AuthController {
     res.cookie('access-token', token.accessToken, {
       expires: new Date(Date.now() + 60000 + 9 * 60 * 60 * 1000),
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: 'lax',
     });
     res.cookie('refresh-token', token.refreshToken, {
       expires: new Date(Date.now() + 60000 + 9 * 60 * 60 * 1000),
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: 'lax',
     });
 
