@@ -22,7 +22,7 @@ export class AuthService {
     const params = {
       grant_type: 'authorization_code',
       client_id: process.env.KAKAO_CLIENT_ID,
-      redirect_uri: process.env.KAKAO_REDIRECT_URI,
+      redirect_uri: 'http://localhost:5173/kakao/callback',
       code: code,
     };
     const headers = {

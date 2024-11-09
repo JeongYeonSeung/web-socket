@@ -56,6 +56,6 @@ export class AuthController {
     );
 
     // 프론트엔드로 최종 응답 전송
-    res.json({ message: 'Login successful' });
+    res.status(200).send();
   }
 }
