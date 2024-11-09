@@ -1,8 +1,15 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { firstValueFrom } from 'rxjs';
-import { JwtPayload } from 'src/common/interface/auth.interface';
+import {
+  JwtPayload,
+  RefreshTokenPayload,
+} from 'src/common/interface/auth.interface';
 import { TokenResponseDto } from './dto/token-response-dto';
 import { Repository } from 'typeorm';
 import { TokenEntity } from 'src/entity/token.entity';
@@ -89,5 +96,41 @@ export class AuthService {
       await this.tokenRepository.save(token);
       console.log('saved');
     }
+  }
+
+  async refreshToken(payload: RefreshTokenPayload): Promise<TokenResponseDto> {
+    const { refreshToken, id } = payload;
+    const existingToken = await this.tokenRepository.findOne({
+      where: { user: { id }, refreshToken },
+    });
+    if (!existingToken) {
+      throw new NotFoundException('Invalid refresh token - id error');
+    }
+
+    const newPayload: JwtPayload = { id, signedAt: new Date().toISOString() };
+    const token = await this.getToken(newPayload);
+    const updated = await this.tokenRepository.update(
+      {
+        user: { id },
+      },
+      { refreshToken: token.refreshToken },
+    );
+
+    if (updated.affected === 0) {
+      throw new InternalServerErrorException('refreshToken update failed!');
+    }
+
+    return token;
+  }
+
+  async removeRefreshToken(id: string): Promise<void> {
+    const token = await this.tokenRepository.findOne({
+      where: { user: { id } },
+    });
+
+    if (!token) {
+      throw new NotFoundException('User not found!');
+    }
+    await this.tokenRepository.remove(token);
   }
 }

@@ -1,9 +1,23 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Post, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { UsersService } from 'src/users/users.service';
-import { ApiBody, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { KakaoLoginRequestDto } from './dto/kakao-login-request.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { AccessUser } from 'src/common/decorators/accessUser.decorator';
+import {
+  JwtPayload,
+  RefreshTokenPayload,
+} from 'src/common/interface/auth.interface';
+import { SignUpRequestDto } from './dto/sign-up-request.dto';
+import { TokenResponseDto } from './dto/token-response-dto';
+import { RefreshUser } from 'src/common/decorators/refreshUser.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -57,5 +71,53 @@ export class AuthController {
 
     // 프론트엔드로 최종 응답 전송
     res.status(200).send();
+  }
+
+  @ApiBearerAuth('accessToken')
+  @Post('/signup')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: '회원가입' })
+  @ApiBody({ type: SignUpRequestDto })
+  @ApiResponse({
+    status: 201,
+    description: '회원가입 성공 시',
+  })
+  async signup(
+    @AccessUser() user: JwtPayload,
+    @Body() signupDto: SignUpRequestDto,
+  ): Promise<void> {
+    console.log(signupDto);
+    await this.usersService.signup(signupDto, user.id);
+  }
+
+  @ApiBearerAuth('refreshToken')
+  @Post('/refresh')
+  @UseGuards(AuthGuard('jwt-refresh'))
+  @ApiOperation({
+    summary: 'Token 재발급',
+    description:
+      'refreshToken을 이용하여 accessToken, refreshToken을 재발급합니다.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Token 재발급 성공 시',
+    type: TokenResponseDto,
+  })
+  async refresh(
+    @RefreshUser() user: RefreshTokenPayload,
+  ): Promise<TokenResponseDto> {
+    return await this.authService.refreshToken(user);
+  }
+
+  @ApiBearerAuth('accessToken')
+  @Post('/logout')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({
+    summary: '로그아웃',
+    description: '서버에 저장된 refreshToken을 삭제합니다.',
+  })
+  @ApiResponse({ status: 201, description: '로그아웃 성공 시' })
+  async logout(@AccessUser() user: JwtPayload): Promise<void> {
+    await this.authService.removeRefreshToken(user.id);
   }
 }

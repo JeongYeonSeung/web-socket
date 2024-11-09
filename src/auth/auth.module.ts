@@ -8,6 +8,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { HttpModule } from '@nestjs/axios';
 import { UsersModule } from 'src/users/users.module';
 import { UsersService } from 'src/users/users.service';
+import { JwtStrategy } from './strategy/jwt.strategy';
+import { RefreshStrategy } from './strategy/refresh.strategy';
 
 @Module({
   imports: [
@@ -17,6 +19,6 @@ import { UsersService } from 'src/users/users.service';
     UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, UsersService],
+  providers: [AuthService, UsersService, JwtStrategy, RefreshStrategy],
 })
 export class AuthModule {}
